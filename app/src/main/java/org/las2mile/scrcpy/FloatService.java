@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.WindowManager;
 
 public class FloatService extends Service {
+    private static final String PREFERENCE_KEY = "default";
     private static final String TAG = "FloatService";
 
     DisplayWindow displayWindow;
@@ -22,6 +23,7 @@ public class FloatService extends Service {
 
     int w;
     int h;
+    boolean no_control;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -34,9 +36,11 @@ public class FloatService extends Service {
             return super.onStartCommand(intent, flags, startId);
         }
         String ip = intent.getStringExtra("ip");
+        int p = intent.getIntExtra("p",5555);
         w = intent.getIntExtra("w",1080);
         h = intent.getIntExtra("h",1920);
         int b = intent.getIntExtra("b",1024000);
+        no_control = getApplicationContext().getSharedPreferences(PREFERENCE_KEY, 0).getBoolean("No Control", false);
 
         Log.d(TAG, "onStartCommand: "+w+","+h+"|"+b+" ->"+ip);
         displayWindow.setRemote(w,h);
@@ -44,7 +48,7 @@ public class FloatService extends Service {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                startCopy(ip,w,h,b);
+                startCopy(ip,p,w,h,b);
             }
         }).start();
 
@@ -70,7 +74,7 @@ public class FloatService extends Service {
 
     }
 
-    private void startCopy(String ip,int width,int height,int bitrate) {
+    private void startCopy(String ip,int port,int width,int height,int bitrate) {
         scrcpyHost = new ScrcpyHost();
         scrcpyHost.setConnectCallBack(new ScrcpyHost.ConnectCallBack() {
             @Override
@@ -79,7 +83,7 @@ public class FloatService extends Service {
                 displayWindow.hideHintTip();
             }
         });
-        scrcpyHost.connect(getApplicationContext(),ip,width,height,bitrate,displayWindow.getDisplaySurface());
+        scrcpyHost.connect(getApplicationContext(),ip,port,width,height,bitrate,displayWindow.getDisplaySurface());
     }
 
     @Override
@@ -87,6 +91,13 @@ public class FloatService extends Service {
         super.onConfigurationChanged(newConfig);
         Log.d(TAG, "onConfigurationChanged: ");
         displayWindow.setRemote(w,h);
+        
+        displayWindow.setOnDisplayTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                return scrcpyHost.touch(motionEvent,displayWindow.getSurfaceWidth(), displayWindow.getSurfaceHeight());
+            }
+        });
     }
 
     @Override

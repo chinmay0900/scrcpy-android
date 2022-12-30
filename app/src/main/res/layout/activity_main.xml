@@ -18,7 +18,7 @@
 
             <TextView
                 android:padding="20dp"
-                android:text="要使用scrcpy-lite,要开启手机的无线调试\nadb命令:adb tcpip 5555\n\n横屏向下滚动啊↓"
+                android:text="To use scrcpy-lite, you need to open the wireless debugging of the mobile phone\nadb command: adb tcpip 5555\nThe app crashes if wrong input is given in Floating Window Mode. Try with Normal mode to verify input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
@@ -27,7 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="20dp"
-                android:text="手机的IP地址,例如192.168.0.73"
+                android:text="The IP address of the mobile phone, such as 192.168.0.73"
                 android:textAppearance="@android:style/TextAppearance" />
 
             <EditText
@@ -43,11 +43,31 @@
 
 
             <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="20dp"
+                android:text="The port address, generally 5555"
+                android:textAppearance="@android:style/TextAppearance" />
+
+            <EditText
+                android:id="@+id/editText_server_port"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLength="5"
+                android:ems="7"
+                android:inputType="number"
+                android:minHeight="48dp"
+		android:text="5555"
+                tools:ignore="LabelFor,SpeakableTextPresentCheck"
+                android:importantForAutofill="no" />
+
+
+            <TextView
                 android:textSize="16sp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="传输分辨率(不是手机分辨率，只影响清晰度随便选,同比例优先,建议选小一点)"
+                android:text="Transmission resolution (not mobile phone resolution, only affects the definition, choose at will, the same ratio is preferred)"
                 android:textAppearance="@android:style/TextAppearance" />
 
             <Spinner
@@ -62,7 +82,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="带宽码率 (影响清晰度和延迟)"
+                android:text="Bandwidth bitrate (affects clarity and latency)"
                 android:textAppearance="@android:style/TextAppearance" />
 
             <Spinner
@@ -120,14 +140,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="内置模式"
+                android:text="Normal mode"
                 android:textSize="30sp" />
             <Button
                 android:id="@+id/button_start_float"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="悬浮窗模式"
+                android:text="Floating Window Mode"
                 android:textSize="30sp" />
         </LinearLayout>
 

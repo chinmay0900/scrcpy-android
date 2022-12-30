@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Scrcpy extends Service {
 
     private String serverAdr;
+    private int serverPrt;
     private Surface surface;
     private int screenWidth;
     private int screenHeight;
@@ -62,10 +63,11 @@ public class Scrcpy extends Service {
 
     }
 
-    public void start(Surface surface, String serverAdr, int screenHeight, int screenWidth) {
+    public void start(Surface surface, String serverAdr, int serverPrt, int screenHeight, int screenWidth) {
         this.videoDecoder = new VideoDecoder();
         videoDecoder.start();
         this.serverAdr = serverAdr;
+        this.serverPrt = serverPrt;
         this.screenHeight = screenHeight;
         this.screenWidth = screenWidth;
         this.surface = surface;

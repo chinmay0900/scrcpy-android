@@ -1,6 +1,7 @@
 package org.las2mile.scrcpy;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -158,22 +159,21 @@ public class DisplayWindow extends FrameLayout {
         return surfaceView;
     }
 
-    public void setRemote(int w,int h){
+    public void setRemote(int w, int h){
         DisplayMetrics metrics = new DisplayMetrics();
         WindowManager windowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-        final Display display = windowManager.getDefaultDisplay();
-        display.getRealMetrics(metrics);
-        float this_dev_height = metrics.heightPixels;
-        float this_dev_width = Math.min(metrics.heightPixels,metrics.widthPixels);
+	final Rect bounds = windowManager.getCurrentWindowMetrics().getBounds();
+	float this_dev_height = bounds.height();
+        float this_dev_width = bounds.width();
 
         post(new Runnable() {
             @Override
             public void run() {
-                //根据比例设置高度
+                // Set height according to scale
                 ViewGroup.LayoutParams lp = container.getLayoutParams();
                 float rate = (float)w/h;
                 Log.d(TAG, "setRemote: "+w+","+h+" %->"+rate);
-                //高度屏幕的80%，然后宽度按比例
+                // The height is 80% of the screen, then the width is proportional
                 lp.height = (int)(this_dev_height * 0.95 - actionbar.getMeasuredHeight() - header.getMeasuredHeight()-50);
                 lp.width = (int) (lp.height * rate);
                 container.setLayoutParams(lp);

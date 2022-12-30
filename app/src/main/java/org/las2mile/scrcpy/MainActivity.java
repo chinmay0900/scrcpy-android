@@ -18,7 +18,6 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Base64;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
@@ -60,6 +59,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     private String local_ip;
     private Context context;
     private String serverAdr = null;
+    private int serverPrt = 5555;
     private SurfaceView surfaceView;
     private Surface surface;
     private Scrcpy scrcpy;
@@ -77,7 +77,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
             scrcpy.setServiceCallbacks(MainActivity.this);
             serviceBound = true;
            if (first_time) {
-                scrcpy.start(surface, serverAdr, screenHeight, screenWidth);
+                scrcpy.start(surface, serverAdr, serverPrt, screenHeight, screenWidth);
                int count = 100;
                while (count!=0 && !scrcpy.check_socket_connection()){
                    count --;
@@ -153,14 +153,14 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
         startButton.setOnClickListener(v -> {
             local_ip = wifiIpAddress();
             getAttributes();
-            if (!serverAdr.isEmpty()) {
-                if (sendCommands.SendAdbCommands(context, fileBase64, serverAdr, local_ip, videoBitrate, Math.max(screenHeight, screenWidth)) == 0) {
+            if ((!serverAdr.isEmpty()) && (serverPrt != 0)) {
+                if (sendCommands.SendAdbCommands(context, fileBase64, serverAdr, serverPrt, local_ip, videoBitrate, Math.max(screenHeight, screenWidth)) == 0) {
                     start_screen_copy_magic();
                 } else {
                     Toast.makeText(context, "Network OR ADB connection failed", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(context, "Server Address Empty", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Server Address or Port Empty", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -174,14 +174,15 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     private void showDisplayWindow() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
-                //启动Activity让用户授权
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                // Start the Activity to allow the user to authorize
+		Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
                 startActivity(intent);
                 return;
             }
         }
         Intent it = new Intent(this,FloatService.class);
         it.putExtra("ip",serverAdr);
+        it.putExtra("p",serverPrt);
         it.putExtra("w",screenWidth);
         it.putExtra("h",screenHeight);
         it.putExtra("b",videoBitrate);
@@ -193,9 +194,11 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     public void get_saved_preferences(){
         this.context = this;
         final EditText editTextServerHost = findViewById(R.id.editText_server_host);
+        final EditText editTextServerPort = findViewById(R.id.editText_server_port);
         final Switch aSwitch0 = findViewById(R.id.switch0);
         final Switch aSwitch1 = findViewById(R.id.switch1);
         editTextServerHost.setText(context.getSharedPreferences(PREFERENCE_KEY, 0).getString("Server Address", ""));
+        editTextServerPort.setText(Integer.toString(context.getSharedPreferences(PREFERENCE_KEY, 0).getInt("Server Port", 0)));
         aSwitch0.setChecked(context.getSharedPreferences(PREFERENCE_KEY, 0).getBoolean("No Control", false));
         aSwitch1.setChecked(context.getSharedPreferences(PREFERENCE_KEY, 0).getBoolean("Nav Switch", false));
         setSpinner(R.array.options_resolution_values, R.id.spinner_video_resolution, PREFERENCE_SPINNER_RESOLUTION);
@@ -215,15 +218,6 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
 
     @SuppressLint("ClickableViewAccessibility")
     public void set_display_nd_touch() {
-        DisplayMetrics metrics = new DisplayMetrics();
-        if (ViewConfiguration.get(context).hasPermanentMenuKey()) {
-            getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        } else {
-            final Display display = getWindowManager().getDefaultDisplay();
-            display.getRealMetrics(metrics);
-        }
-//        float this_dev_height = metrics.heightPixels;
-//        float this_dev_width = metrics.widthPixels;
 
         float this_dev_height = linearLayout.getHeight();
         float this_dev_width = linearLayout.getWidth();
@@ -302,6 +296,9 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
         final EditText editTextServerHost = findViewById(R.id.editText_server_host);
         serverAdr = editTextServerHost.getText().toString();
         context.getSharedPreferences(PREFERENCE_KEY, 0).edit().putString("Server Address", serverAdr).apply();
+        final EditText editTextServerPort = findViewById(R.id.editText_server_port);
+        serverPrt = Integer.parseInt(editTextServerPort.getText().toString());
+        context.getSharedPreferences(PREFERENCE_KEY, 0).edit().putInt("Server Port", serverPrt).apply();
         final Spinner videoResolutionSpinner = findViewById(R.id.spinner_video_resolution);
         final Spinner videoBitrateSpinner = findViewById(R.id.spinner_video_bitrate);
         final Switch a_Switch0 = findViewById(R.id.switch0);
@@ -328,14 +325,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     private void start_screen_copy_magic() {
 //        Log.e("Scrcpy: ","Starting scrcpy service");
             setContentView(R.layout.surface);
-            final View decorView = getWindow().getDecorView();
-            decorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            getWindow().setDecorFitsSystemWindows(false);
             surfaceView = findViewById(R.id.decoder_surface);
             surface = surfaceView.getHolder().getSurface();
         final LinearLayout nav_bar = findViewById(R.id.nav_button_bar);
@@ -424,14 +414,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     protected void onResume() {
         super.onResume();
         if (!first_time && !result_of_Rotation) {
-            final View decorView = getWindow().getDecorView();
-            decorView.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            getWindow().setDecorFitsSystemWindows(false);
             if (serviceBound) {
                 linearLayout = findViewById(R.id.container1);
                 scrcpy.resume();

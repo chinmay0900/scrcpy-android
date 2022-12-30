@@ -49,7 +49,7 @@
             android:id="@+id/hint"
             android:gravity="center"
             android:textColor="@color/white"
-            android:text="链接中...30秒没反应估计就挂了\n\n注意手机提示配对的弹窗"
+            android:text="Linking... If there is no response in 30 seconds,\n it will probably hang up\n\nPay attention to the pop-up window\n on the phone prompting pairing"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </FrameLayout>
