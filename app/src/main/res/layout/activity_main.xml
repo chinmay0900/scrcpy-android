@@ -57,7 +57,7 @@
                 android:ems="7"
                 android:inputType="number"
                 android:minHeight="48dp"
-		android:text="5555"
+		        android:text="5555"
                 tools:ignore="LabelFor,SpeakableTextPresentCheck"
                 android:importantForAutofill="no" />
 

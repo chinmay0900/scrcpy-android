@@ -84,7 +84,7 @@ public final class Server {
         });
 
         try {
-            Process cmd = Runtime.getRuntime().exec("rm /data/local/tmp/scrcpy-server.jar");
+            Process cmd = Runtime.getRuntime().exec("rm /data/local/tmp/scrcpy-server_android.jar");
             cmd.waitFor();
         } catch (IOException e1) {
             e1.printStackTrace();

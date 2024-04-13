@@ -68,7 +68,7 @@ public class SendCommands {
         this.context = context;
         status = 1;
         final StringBuilder command = new StringBuilder();
-        command.append(" CLASSPATH=/data/local/tmp/scrcpy-server.jar app_process / org.las2mile.scrcpy.Server ");
+        command.append(" CLASSPATH=/data/local/tmp/scrcpy-server_android.jar app_process / org.las2mile.scrcpy.Server ");
         command.append(" /" + localip + " " + Long.toString(size) + " " + Long.toString(bitrate) + ";");
 
         thread = new Thread(new Runnable() {
@@ -224,7 +224,7 @@ public class SendCommands {
                         }
                     }
                 }
-                stream.write(" base64 -d < serverBase64 > scrcpy-server.jar && rm serverBase64" + '\n');
+                stream.write(" base64 -d < serverBase64 > scrcpy-server_android.jar && rm serverBase64" + '\n');
                 Thread.sleep(100);
                 stream.write(command + '\n');
             } catch (IOException | InterruptedException e) {

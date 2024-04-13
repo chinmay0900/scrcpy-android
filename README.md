@@ -10,7 +10,7 @@
 
 ## Download
 
-[scrcpy-release-v2.1.apk](https://github.com/chinmay0900/scrcpy-android/releases/)
+[scrcpy-debug.apk](https://github.com/happyman/scrcpy-android/releases/tag/v0.1)
 
 
 ## Instructions to use
@@ -37,7 +37,28 @@
 
 - To bring back the local android system navbar while mirroring the remote device, **swipe up from the bottom edge of screen**.
 
+## JDK note
 
+from https://github.com/huage2580/scrcpy-android/issues/4
+
+```
+# in WSL 2.0, Ubuntu 20.04
+$ sudo apt install gradle openjdk-11-jdk
+$ mkdir /mnt/c/Users/happyman/AndroidSdk/
+# download sdkmanger .. from web site: https://developer.android.com/studio
+# choose commandlinetools-linux-11076708_latest.zip
+# extract to sdk directory /mnt/c/Users/happyman/AndroidSdk/cmdline-tools
+# add env variables
+$ echo "export ANDROID_SDK_ROOT=/mnt/c/Users/happyman/AndroidSdk/" >> ~/.bashrc
+$ echo "export PATH=$PATH:ANDROID_SDK_ROOT/cmdline_tools/bin" >> ~/.bashrc
+# re-enter bash
+# choose /usr/lib/jvm/java-11-openjdk-amd64/bin/java   
+$ sudo update-alternatives --config java
+$ sdkmanager --sdk_root=/mnt/c/Users/happyman/AndroidSdk/ --update
+$ sdkmanager --sdk_root=/mnt/c/Users/happyman/AndroidSdk/ "platforms;android-25" "build-tools;25.0.2" "extras;google;m2repository" "extras;android;m2repository"
+$ sdkmanager --sdk_root=/mnt/c/Users/happyman/AndroidSdk/ --licenses
+
+```
 ## Building with Gradle
 
     ./gradlew assembleDebug

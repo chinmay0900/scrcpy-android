@@ -8,10 +8,12 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.AssetManager;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri; 
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -42,6 +44,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 
+
 public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, SensorEventListener {
     private static final String PREFERENCE_KEY = "default";
     private static final String PREFERENCE_SPINNER_RESOLUTION = "spinner_resolution";
@@ -69,6 +72,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     private static float remote_device_height;
     private LinearLayout linearLayout;
     private static boolean no_control = false;
+    private SharedPreferences.Editor editor;
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -119,10 +123,10 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.context = this;
         if (first_time) {
             scrcpy_main();
         } else {
-            this.context = this;
             start_screen_copy_magic();
         }
         sensorManager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
@@ -149,9 +153,25 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
             Log.e("Asset Manager", e.getMessage());
         }
         sendCommands = new SendCommands();
-
+        // happyman 
+        editor = context.getSharedPreferences(PREFERENCE_KEY, 0).edit();
+        Intent intent = getIntent();
+        Uri uri=intent.getData();
+        if (uri != null){
+            Toast.makeText(context, "Got host from uri", Toast.LENGTH_SHORT).show();
+            String host=uri.getHost();
+            int port=uri.getPort();
+            if (port <= 0) port =5555;
+            editor.putString("Server Address",host);
+            editor.putInt("Server Port",port);
+            editor.putInt(PREFERENCE_SPINNER_RESOLUTION, 1); // 1600x720
+            editor.putInt(PREFERENCE_SPINNER_BITRATE, 2); // 4M
+            editor.putBoolean("Nav Switch", true);
+            editor.apply();
+        } 
         startButton.setOnClickListener(v -> {
             local_ip = wifiIpAddress();
+            // load data from UI
             getAttributes();
             if ((!serverAdr.isEmpty()) && (serverPrt != 0)) {
                 if (sendCommands.SendAdbCommands(context, fileBase64, serverAdr, serverPrt, local_ip, videoBitrate, Math.max(screenHeight, screenWidth)) == 0) {
@@ -198,7 +218,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
         final Switch aSwitch0 = findViewById(R.id.switch0);
         final Switch aSwitch1 = findViewById(R.id.switch1);
         editTextServerHost.setText(context.getSharedPreferences(PREFERENCE_KEY, 0).getString("Server Address", ""));
-        editTextServerPort.setText(Integer.toString(context.getSharedPreferences(PREFERENCE_KEY, 0).getInt("Server Port", 0)));
+        editTextServerPort.setText(Integer.toString(context.getSharedPreferences(PREFERENCE_KEY, 0).getInt("Server Port", 5555)));
         aSwitch0.setChecked(context.getSharedPreferences(PREFERENCE_KEY, 0).getBoolean("No Control", false));
         aSwitch1.setChecked(context.getSharedPreferences(PREFERENCE_KEY, 0).getBoolean("Nav Switch", false));
         setSpinner(R.array.options_resolution_values, R.id.spinner_video_resolution, PREFERENCE_SPINNER_RESOLUTION);
@@ -290,7 +310,7 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
         });
         spinner.setSelection(context.getSharedPreferences(PREFERENCE_KEY, 0).getInt(preferenceId, 0));
     }
-
+    // load data from UI
     private void getAttributes() {
 
         final EditText editTextServerHost = findViewById(R.id.editText_server_host);
@@ -338,9 +358,38 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
             start_Scrcpy_service();
     }
 
+    protected String TunAddresses() {
+        try {
+            InetAddress ipv4 = null;
+            for (Enumeration<NetworkInterface> en = NetworkInterface
+                    .getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface int_f = en.nextElement();
+                    if (int_f.getName().equals("tun0")){
+                            for (Enumeration<InetAddress> enumIpAddr = int_f.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                            InetAddress inetAddress = enumIpAddr.nextElement();
+                            if (inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                                ipv4 = inetAddress;
+                                continue;
+                            }
+                            return inetAddress.getHostAddress();
+                        }
+                        if (ipv4 != null) {
+                            return ipv4.getHostAddress();
+                        }
+                        return null;
+                    }
+            }
+        } catch (SocketException ex) {
+            ex.printStackTrace();
+        }
+        return null;
 
+    }
     protected String wifiIpAddress() {
 //https://stackoverflow.com/questions/6064510/how-to-get-ip-address-of-the-device-from-code
+        String a = TunAddresses();
+        if (a != null)
+            return a;
         try {
             InetAddress ipv4 = null;
             InetAddress ipv6 = null;
